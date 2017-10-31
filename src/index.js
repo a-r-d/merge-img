@@ -30,7 +30,7 @@ export default function mergeImg(images, {
         }));
     }
 
-    return read(img).then((imgObj) => ({img: imgObj}));
+    return read(img).then((imgObj) => ({img: imgObj, src: img}));
   };
 
   return Promise.all(images.map(processImg))
@@ -38,10 +38,11 @@ export default function mergeImg(images, {
       let totalX = 0;
       let totalY = 0;
 
-      const imgData = imgs.reduce((res, {img, offsetX = 0, offsetY = 0}) => {
+      const imgData = imgs.reduce((res, {src, img, offsetX = 0, offsetY = 0}) => {
         const {bitmap: {width, height}} = img;
 
         res.push({
+          src,
           img,
           x: totalX + offsetX,
           y: totalY + offsetY,
@@ -81,6 +82,6 @@ export default function mergeImg(images, {
         baseImage.composite(img, px + left, py + top);
       }
 
-      return baseImage;
+      return {baseImage, imgData};
     });
 }
