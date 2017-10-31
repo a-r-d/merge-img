@@ -9,6 +9,7 @@ export default function mergeImg(images, {
   align = 'start',
   offset = 0,
   margin,
+  transformMap
 } = {}) {
   if (!Array.isArray(images)) {
     throw new TypeError('`images` must be an array that contains images');
@@ -18,19 +19,21 @@ export default function mergeImg(images, {
     throw new Error('At least `images` must contain more than one image');
   }
 
-  const processImg = (img) => {
+  const processImg = (img, index) => {
     if (isPlainObj(img)) {
       const {src, offsetX, offsetY} = img;
 
       return read(src)
         .then((imgObj) => ({
+          src,
+          index,
           img: imgObj,
           offsetX,
           offsetY,
         }));
     }
 
-    return read(img).then((imgObj) => ({img: imgObj, src: img}));
+    return read(img).then((imgObj) => ({img: imgObj, src: img, index: index}));
   };
 
   return Promise.all(images.map(processImg))
@@ -38,12 +41,13 @@ export default function mergeImg(images, {
       let totalX = 0;
       let totalY = 0;
 
-      const imgData = imgs.reduce((res, {src, img, offsetX = 0, offsetY = 0}) => {
+      let imgData = imgs.reduce((res, {src, index, img, offsetX = 0, offsetY = 0}) => {
         const {bitmap: {width, height}} = img;
 
         res.push({
           src,
           img,
+          index,
           x: totalX + offsetX,
           y: totalY + offsetY,
           offsetX,
@@ -55,6 +59,10 @@ export default function mergeImg(images, {
 
         return res;
       }, []);
+
+      if(transformMap) {
+        imgData = imgData.map(transformMap)
+      }
 
       const {top, right, bottom, left} = calcMargin(margin);
       const marginTopBottom = top + bottom;
